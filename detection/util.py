@@ -8,10 +8,10 @@ def select_best(boxes: np.ndarray, scores: np.ndarray, threshold: float):
     if boxes.dtype.kind == "i":
         boxes = boxes.astype("float")
     pick = []
-    x1 = boxes[:, 0]
-    y1 = boxes[:, 1]
-    x2 = boxes[:, 2]
-    y2 = boxes[:, 3]
+    y1 = boxes[:, 0]
+    x1 = boxes[:, 1]
+    y2 = boxes[:, 2]
+    x2 = boxes[:, 3]
 
     box_area = (x2 - x1 + 1) * (y2 - y1 + 1)
     remaining_ids = np.argsort(scores)
