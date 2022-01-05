@@ -6,9 +6,9 @@ from detection import pyramid, util, window
 from hog import hog
 
 
-def visualize(bboxes, max_count):
+def visualize():
     counter2 = 0
-    for (x1, y1, x2, y2) in bboxes:
+    for (y1, x1, y2, x2) in bboxes:
         if counter2 == max_count:
             break
 
@@ -36,6 +36,8 @@ if __name__ == "__main__":
         scale_counter = 0
         image = cv2.imread(str(img_path))
         img_gray = cv2.imread(str(img_path), 0)
+        if image is None:
+            continue
         if img_gray.size > max_img_size:
             img_gray = img_ops.nn_resize(img_gray, (256, 400))
             image = cv2.resize(image, (400, 256))
@@ -43,17 +45,17 @@ if __name__ == "__main__":
         for im_scaled in pyramid.pyramid_gaussian(img_gray, downscale=downscale, max_layer=4):
             if im_scaled.shape[0] < size[1] or im_scaled.shape[1] < size[0]:
                 break
-            for (y, x, window) in window.sliding_window(im_scaled, size, step_size):
-                if window.shape[0] != size[1] or window.shape[1] != size[0]:
+            for (y, x, current_window) in window.sliding_window(im_scaled, size, step_size):
+                if current_window.shape[0] != size[1] or current_window.shape[1] != size[0]:
                     continue
 
-                hog = hog.hog(window, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
-                hog = hog.reshape(1, -1)
-                pred = model.predict(hog)
+                img_hog = hog.hog(current_window, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
+                img_hog = img_hog.reshape(1, -1)
+                pred = model.predict(img_hog)
                 if pred == 1:
-                    if model.decision_function(hog) > 1.7:
+                    if model.decision_function(img_hog) > 1.6:
                         detections.append(
-                            (int(y * (downscale ** scale_counter)), int(x * (downscale ** scale_counter)), model.decision_function(hog),
+                            (int(y * (downscale ** scale_counter)), int(x * (downscale ** scale_counter)), model.decision_function(img_hog),
                              int(size[0] * (downscale ** scale_counter)),
                              int(size[1] * (downscale ** scale_counter))))
 

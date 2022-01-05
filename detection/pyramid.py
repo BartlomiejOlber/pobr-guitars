@@ -40,7 +40,7 @@ def pyramid_gaussian(img: np.ndarray, downscale: float, max_layer: int):
 
     while layer != max_layer:
         layer += 1
-        out_shape = tuple([np.ceil(d / downscale) for d in prev_layer_image.shape])
+        out_shape = tuple([int(np.ceil(d / downscale)) for d in prev_layer_image.shape])
         g_kernel = _create_kernel(3, sigma)
         smoothed = convolve(prev_layer_image, g_kernel)
         layer_image = nn_resize(smoothed, out_shape)

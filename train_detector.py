@@ -18,8 +18,8 @@ if __name__ == "__main__":
     for filename in pathlib.Path(pos_imgs_path).rglob("*.*g"):
         img = cv2.imread(str(filename), 0)
         img = img_ops.nn_resize(img, (48, 48))
-        hog = hog.hog(img, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
-        train_data.append(img)
+        img_hog = hog.hog(img, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
+        train_data.append(img_hog)
         train_labels.append(1.)
 
     positive_count = len(train_labels)
@@ -28,8 +28,8 @@ if __name__ == "__main__":
     for i, filename in enumerate(pathlib.Path(neg_imgs_path).rglob("*g")):
         img = cv2.imread(str(filename), 0)
         img = img_ops.nn_resize(img, (48, 48))
-        hog = hog.hog(img, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
-        train_data_.append(img)
+        img_hog = hog.hog(img, orientations=9, pixels_per_cell=(8, 8), cells_per_block=(3, 3))
+        train_data_.append(img_hog)
         train_labels.append(0.)
 
     train_data = train_data + train_data_
