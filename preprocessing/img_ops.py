@@ -1,45 +1,50 @@
 import numpy as np
-import math
 
 
-def resize(original_img: np.ndarray, out_shape: tuple) -> np.ndarray:
-    old_h, old_w = original_img.shape
+def nn_resize(img: np.ndarray, out_shape: tuple) -> np.ndarray:
+    height, width = img.shape
+    new_width, new_height = out_shape[1], out_shape[0]
+    new = np.ones((new_height, new_width))
+    scale_x = new_width / width
+    scale_y = new_height / height
+    for y in range(new_height):
+        for x in range(new_width):
+            x_nearest = int(np.round(x / scale_x))
+            y_nearest = int(np.round(y / scale_y))
+            new[y, x] = img[y_nearest, x_nearest]
+    return new
+
+
+def bi_resize(img: np.ndarray, out_shape: tuple):
+    old_h, old_w = img.shape
     new_h, new_w = out_shape
     out_img = np.zeros((new_h, new_w))
-    w_scale_factor = (old_w) / (new_w) if new_h != 0 else 0
-    h_scale_factor = (old_h) / (new_h) if new_w != 0 else 0
-    for row in range(new_h):
-        for col in range(new_w):
-            new_row = row * h_scale_factor
-            new_col = col * w_scale_factor
+    w_scale_factor = old_w / new_w if new_h != 0 else 0
+    h_scale_factor = old_h / new_h if new_w != 0 else 0
+    for y in range(new_h):
+        for x in range(new_w):
+            exact_new_x = x / w_scale_factor
+            exact_new_y = y / h_scale_factor
 
-            row_floor = np.floor(new_row)
-            row_ceil = np.min(old_h - 1, math.ceil(new_row))
-            col_floor = np.floor(new_col)
-            col_ceil = np.min(old_w - 1, math.ceil(new_col))
+            x_floor = np.min(int(np.floor(exact_new_x)), old_w - 1)
+            y_floor = np.min(int(np.floor(exact_new_y)), old_h - 1)
+            x_ceil = np.min(int(np.ceil(exact_new_x)), old_w - 1)
+            y_ceil = np.min(int(np.ceil(exact_new_y)), old_h - 1)
 
-            if (row_ceil == row_floor) and (col_ceil == col_floor):
-                new_pixel = original_img[int(new_row), int(new_col)]
-            elif row_ceil == row_floor:
-                left_pixel = original_img[int(new_row), int(col_floor)]
-                right_pixel = original_img[int(new_row), int(col_ceil)]
-                new_pixel = left_pixel * (col_ceil - new_col) + right_pixel * (new_col - col_floor)
-            elif col_ceil == col_floor:
-                top_pixel = original_img[int(row_floor), int(new_col)]
-                down_pixel = original_img[int(row_ceil), int(new_col)]
-                new_pixel = (top_pixel * (row_ceil - new_row)) + (down_pixel * (new_row - row_floor))
-            else:
-                top_left_pixel = original_img[row_floor, col_floor]
-                down_left_pixel = original_img[row_ceil, col_floor]
-                top_right_pixel = original_img[row_floor, col_ceil]
-                down_right_pixel = original_img[row_ceil, col_ceil]
+            top_left_pixel = img[y_floor, x_floor]
+            top_right_pixel = img[y_floor, x_ceil]
+            down_left_pixel = img[y_ceil, x_floor]
+            down_right_pixel = img[y_ceil, x_ceil]
 
-                left_pixel = top_left_pixel * (row_ceil - new_row) + down_left_pixel * (new_row - row_floor)
-                right_pixel = top_right_pixel * (row_ceil - new_row) + down_right_pixel * (new_row - row_floor)
-                new_pixel = left_pixel * (col_ceil - new_col) + right_pixel * (new_col - col_floor)
+            interpolated_top_pixel = (x_ceil - exact_new_x) * top_left_pixel + (exact_new_x - x_floor) * top_right_pixel
+            interpolated_down_pixel = (x_ceil - exact_new_x) * down_left_pixel + (
+                        exact_new_x - x_floor) * down_right_pixel
 
-            out_img[row, col] = new_pixel
-    return out_img.astype(np.uint8)
+            new_pixel = (y_ceil - exact_new_y) * interpolated_top_pixel + (
+                        exact_new_y - y_floor) * interpolated_down_pixel
+            out_img[y, x] = np.round(new_pixel)
+
+    return out_img
 
 
 def rgb2gray(img: np.ndarray):
