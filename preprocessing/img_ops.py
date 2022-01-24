@@ -2,20 +2,25 @@ import numpy as np
 
 
 def nn_resize(img: np.ndarray, out_shape: tuple) -> np.ndarray:
-    height, width = img.shape
     new_width, new_height = out_shape[1], out_shape[0]
-    new = np.ones((new_height, new_width))
+    nearest_id = np.ogrid[0:1, 0:1]
+    if img.ndim == 3:
+        height, width, channels = img.shape
+        new = np.ones((new_height, new_width, channels), dtype=img.dtype)
+    else:
+        height, width = img.shape
+        new = np.ones((new_height, new_width))
     scale_x = new_width / width
     scale_y = new_height / height
     for y in range(new_height):
         for x in range(new_width):
-            x_nearest = int(np.round(x / scale_x))
-            y_nearest = int(np.round(y / scale_y))
-            new[y, x] = img[y_nearest, x_nearest]
+            nearest_id[0][0] = int(np.round(y / scale_y))
+            nearest_id[1][0] = int(np.round(x / scale_x))
+            new[y, x] = img[tuple(nearest_id)]
     return new
 
 
-def bi_resize(img: np.ndarray, out_shape: tuple):
+def bi_resize(img: np.ndarray, out_shape: tuple) -> np.ndarray:
     old_h, old_w = img.shape
     new_h, new_w = out_shape
     out_img = np.zeros((new_h, new_w))

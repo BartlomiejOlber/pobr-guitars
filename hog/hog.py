@@ -1,10 +1,9 @@
 import numpy as np
 
 
-def _compute_histograms(gradient_columns, gradient_rows, pixels_per_cell,
+def _compute_histograms(magnitude, orientation, pixels_per_cell,
                         number_of_cells_columns, number_of_cells_rows, number_of_orientations):
-    magnitude = np.hypot(gradient_columns, gradient_rows)
-    orientation = np.rad2deg(np.arctan2(gradient_rows, gradient_columns)) % 180
+
     angle_span = 180. / number_of_orientations
     orientation_histogram = np.zeros((number_of_cells_rows, number_of_cells_columns, number_of_orientations))
     for i in range(number_of_orientations):
@@ -42,16 +41,18 @@ def _compute_gradients(image):
     cols_gradient[:, -1] = 0
     cols_gradient[:, 1:-1] = image[:, 2:] - image[:, :-2]
 
-    return rows_gradient, cols_gradient
+    magnitude = np.hypot(cols_gradient, rows_gradient)
+    orientation = np.rad2deg(np.arctan2(rows_gradient, cols_gradient)) % 180
+    return magnitude, orientation
 
 
 def hog(image: np.ndarray, orientations: int, pixels_per_cell: tuple, cells_per_block: tuple):  # only 2d nochannels gray
     n_cells_row = int(image.shape[0] // pixels_per_cell[0])
     n_cells_col = int(image.shape[1] // pixels_per_cell[1])
 
-    rows_gradient, cols_gradient = _compute_gradients(image)
+    magnitude, orientation = _compute_gradients(image)
 
-    orientation_histogram = _compute_histograms(cols_gradient, rows_gradient, pixels_per_cell, n_cells_col, n_cells_row, orientations)
+    orientation_histogram = _compute_histograms(magnitude, orientation, pixels_per_cell, n_cells_col, n_cells_row, orientations)
 
     n_blocks_row = (n_cells_row - cells_per_block[0]) + 1
     n_blocks_col = (n_cells_col - cells_per_block[1]) + 1
